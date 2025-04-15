@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Details</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>User Details: {{ user['username'] }}</h1>
+            <div class="user-info">
+                <a href="{{ url_for('app.management_dashboard') }}" class="btn-back">Back to Dashboard</a>
+                <a href="{{ url_for('app.logout') }}" class="btn-logout">Logout</a>
+            </div>
+        </header>
+        
+        {% for message in get_flashed_messages() %}
+            <div class="alert">{{ message }}</div>
+        {% endfor %}
+        
+        <div class="user-status-card">
+            <h2>User Status</h2>
+            <div class="status-info">
+                <p><strong>Username:</strong> {{ user['username'] }}</p>
+                <p><strong>Current Default KM:</strong> 
+                    {% if default_setting %}
+                        {{ default_setting['default_km'] }} KM (valid until {{ default_setting['valid_until'] }})
+                    {% else %}
+                        Not set
+                    {% endif %}
+                </p>
+                <p><strong>Status:</strong> 
+                    {% if user['is_blocked'] == 1 %}
+                        <span class="status blocked">Blocked</span>
+                    {% else %}
+                        <span class="status active">Active</span>
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('app.toggle_block', user_id=user['id']) }}" class="btn {% if user['is_blocked'] == 1 %}btn-unblock{% else %}btn-block{% endif %}">
+                    {% if user['is_blocked'] == 1 %}Unblock User{% else %}Block User{% endif %}
+                </a>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Default KM History -->
+            <div class="card">
+                <h2>Default KM History</h2>
+                {% if default_history %}
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Set Date</th>
+                                    <th>Default KM</th>
+                                    <th>Valid Until</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for setting in default_history %}
+                                    <tr>
+                                        <td>{{ setting['set_date'] }}</td>
+                                        <td>{{ setting['default_km'] }}</td>
+                                        <td>{{ setting['valid_until'] }}</td>
+                                        <td>
+                                            {% if setting['valid_until'] >= today %}
+                                                <span class="status active">Active</span>
+                                            {% else %}
+                                                <span class="status expired">Expired</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="no-data">No default KM history found.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Audit History -->
+            <div class="card">
+                <h2>Audit History</h2>
+                {% if audit_logs %}
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                    <th>Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in audit_logs %}
+                                    <tr>
+                                        <td>{{ log['timestamp'] }}</td>
+                                        <td>{{ log['action'] }}</td>
+                                        <td>{{ log['details'] }}</td>
+                                        <td>{{ log['admin_username'] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="no-data">No audit history found.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Set Default KM -->
+            <div class="card">
+                <h2>Set Default KM</h2>
+                <form action="{{ url_for('app.set_default_km', user_id=user['id']) }}" method="post" class="form">
+                    <div class="form-group">
+                        <label for="default_km">Default KM:</label>
+                        <input type="number" id="default_km" name="default_km" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="valid_until">Valid Until:</label>
+                        <input type="date" id="valid_until" name="valid_until" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Set Default KM</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- User Trip History -->
+            <div class="card">
+                <h2>Recent Trip History</h2>
+                {% if trips %}
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Distance (KM)</th>
+                                    <th>Default Used</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trip in trips %}
+                                    <tr>
+                                        <td>{{ trip['date'] }}</td>
+                                        <td>{{ trip['distance'] }}</td>
+                                        <td>{% if trip['used_default'] == 1 %}Yes{% else %}No{% endif %}</td>
+                                        <td>
+                                            {% if trip['status'] == 'approved' %}
+                                                <span class="status approved">Approved</span>
+                                            {% elif trip['status'] == 'pending' %}
+                                                <span class="status pending">Pending</span>
+                                            {% elif trip['status'] == 'rejected' %}
+                                                <span class="status rejected">Rejected</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="view-more">
+                        <a href="{{ url_for('app.user_trips', user_id=user['id']) }}" class="btn btn-secondary">View All Trips</a>
+                    </div>
+                {% else %}
+                    <p class="no-data">No trip history found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Set minimum date for valid_until to today
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('valid_until').min = today;
+        });
+    </script>
+</body>
+</html>

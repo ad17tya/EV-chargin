@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Management Dashboard</h1>
+            <div class="user-info">
+                <p>Welcome, {{ g.user['username'] }}</p>
+                <a href="{{ url_for('app.logout') }}" class="btn-logout">Logout</a>
+            </div>
+        </header>
+        
+        {% for message in get_flashed_messages() %}
+            <div class="alert">{{ message }}</div>
+        {% endfor %}
+        
+        <div class="dashboard-actions">
+            <a href="{{ url_for('app.generate_bills') }}" class="btn">Generate Monthly Bills</a>
+        </div>
+        
+        <div class="card">
+            <h2>Vehicle Owners</h2>
+            {% if owners_data %}
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Default KM</th>
+                                <th>Usage Count</th>
+                                <th>Current Month KM</th>
+                                <th>Unpaid Bills</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for owner in owners_data %}
+                            <tr class="{% if owner.payment_overdue %}overdue{% endif %}">
+                                <td>{{ owner.username }}</td>
+                                <td>{{ owner.current_default }}</td>
+                                <td>{{ owner.logs_count }}</td>
+                                <td>{{ owner.current_month_km }}</td>
+                                <td>
+                                    {{ owner.unpaid_bills }}
+                                    {% if owner.payment_overdue %}
+                                        <span class="warning">⚠️</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if owner.is_blocked == 1 %}
+                                        <span class="status blocked">Blocked</span>
+                                    {% else %}
+                                        <span class="status active">Active</span>
+                                    {% endif %}
+                                </td>
+                                <td class="actions">
+                                    <a href="{{ url_for('app.user_logs', user_id=owner.id) }}" class="btn-small">View Details</a>
+                                    <a href="{{ url_for('app.toggle_block', user_id=owner.id) }}" class="btn-small {% if owner.is_blocked == 1 %}btn-unblock{% else %}btn-block{% endif %}">
+                                        {% if owner.is_blocked == 1 %}Unblock{% else %}Block{% endif %}
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No vehicle owners found.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

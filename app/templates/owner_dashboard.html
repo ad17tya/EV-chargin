@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Owner Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Vehicle Owner Dashboard</h1>
+            <div class="user-info">
+                <p>Welcome, {{ g.user['username'] }}</p>
+                <a href="{{ url_for('app.logout') }}" class="btn-logout">Logout</a>
+            </div>
+        </header>
+        
+        {% for message in get_flashed_messages() %}
+            <div class="alert">{{ message }}</div>
+        {% endfor %}
+        
+        <div class="dashboard-grid">
+            <!-- Default KM Setting -->
+            <div class="card">
+                <h2>Monthly Default KM Setting</h2>
+                {% if has_valid_default %}
+                    <div class="info-box success">
+                        <strong>Current Default KM:</strong> {{ default_setting['default_km'] }} KM<br>
+                        <strong>Set Date:</strong> {{ default_setting['set_date'] }}<br>
+                        <strong>Valid Until:</strong> {{ default_setting['valid_until'] }}<br>
+                        <div class="note">This value will be automatically applied to your daily usage.</div>
+                        <div class="countdown">Days until you can change: {{ days_until_change }}</div>
+                    </div>
+                {% elif can_set_default %}
+                    <div class="form-section">
+                        <form method="post">
+                            <div class="form-group">
+                                <label for="default_km">Set Default KM for next 30 days</label>
+                                <input type="number" name="default_km" id="default_km" step="0.1" min="0.1" max="100" required>
+                                <small>This value will be fixed for 30 days</small>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" name="set_default_km" value="1">Set Default KM</button>
+                            </div>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Daily Usage Entry Form -->
+            <div class="card">
+                <h2>Log Today's Extra Usage</h2>
+                {% if not has_valid_default %}
+                    <div class="info-notice warning">
+                        You need to set your default KM first before logging daily usage.
+                    </div>
+                {% elif already_logged_today %}
+                    <div class="info-notice">
+                        You've already logged your usage for today.
+                    </div>
+                {% else %}
+                    <form method="post">
+                        <div class="info-box">
+                            Default KM for today: <strong>{{ default_setting['default_km'] }}</strong> KM
+                            <small>(Automatically applied)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="extra_km">Extra KM Today (Optional)</label>
+                            <input type="number" name="extra_km" id="extra_km" step="0.1" min="0" max="50" value="0">
+                            <small>Daily extra limit: 50 KM</small>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" name="log_extra_km" value="1">Submit Usage</button>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+            
+            <!-- Usage History -->
+            <div class="card">
+                <h2>Your Usage History</h2>
+                {% if logs %}
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Default KM</th>
+                                    <th>Extra KM</th>
+                                    <th>Total KM</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                <tr>
+                                    <td>{{ log['date'] }}</td>
+                                    <td>{{ log['default_km'] }}</td>
+                                    <td>{{ log['extra_km'] }}</td>
+                                    <td>{{ log['default_km'] + log['extra_km'] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>No usage logs found.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Billing Information -->
+            <div class="card">
+                <h2>Your Bills</h2>
+                {% if bills %}
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bill in bills %}
+                                <tr>
+                                    <td>{{ bill['month'] }}</td>
+                                    <td>${{ bill['total_amount'] }}</td>
+                                    <td>
+                                        {% if bill['is_paid'] == 1 %}
+                                            <span class="status paid">Paid</span>
+                                        {% else %}
+                                            <span class="status unpaid">Unpaid</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>No bills found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
