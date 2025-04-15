@@ -28,14 +28,14 @@ ev-charging-system/
 │   ├── __init__.py  # Flask application factory
 │   ├── db.py        # Database connection helpers
 │   ├── routes.py    # View functions and routes
-│   └── utils.py     # Utility functions
-├── templates/
-│   ├── login.html
-│   ├── owner_dashboard.html
-│   ├── management_dashboard.html
-│   └── user_logs.html
-├── static/
-│   └── style.css
+│   ├── utils.py     # Utility functions
+|   ├── templates/
+│       ├── login.html
+│       ├── owner_dashboard.html
+│       ├── management_dashboard.html
+│       └── user_logs.html
+|   └── static/
+│       └── style.css
 ├── instance/
 │   └── database.db (auto-created)
 ├── schema.sql       # Database schema and sample data
